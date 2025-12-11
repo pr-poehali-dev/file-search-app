@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,49 @@ const Index = () => {
   const [aiAnswer, setAiAnswer] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const preventCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+      toast({
+        title: "Копирование запрещено",
+        description: "Документы защищены от копирования",
+        variant: "destructive",
+      });
+    };
+
+    const preventContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    const preventScreenshot = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey && e.shiftKey && e.key === 'S') ||
+        (e.metaKey && e.shiftKey && e.key === '3') ||
+        (e.metaKey && e.shiftKey && e.key === '4') ||
+        e.key === 'PrintScreen'
+      ) {
+        e.preventDefault();
+        toast({
+          title: "Действие заблокировано",
+          description: "Скриншоты документов запрещены",
+          variant: "destructive",
+        });
+      }
+    };
+
+    document.addEventListener('copy', preventCopy);
+    document.addEventListener('cut', preventCopy);
+    document.addEventListener('contextmenu', preventContextMenu);
+    document.addEventListener('keydown', preventScreenshot);
+
+    return () => {
+      document.removeEventListener('copy', preventCopy);
+      document.removeEventListener('cut', preventCopy);
+      document.removeEventListener('contextmenu', preventContextMenu);
+      document.removeEventListener('keydown', preventScreenshot);
+    };
+  }, [toast]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -124,7 +167,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 select-none">
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="mb-8 text-center animate-fade-in">
           <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center justify-center gap-3">
@@ -168,7 +211,7 @@ const Index = () => {
                   <Icon name="Sparkles" size={24} className="text-primary mt-1" />
                   <div>
                     <h3 className="font-semibold text-slate-900 mb-2">Ответ</h3>
-                    <p className="text-slate-700 leading-relaxed">{aiAnswer}</p>
+                    <p className="text-slate-700 leading-relaxed select-text">{aiAnswer}</p>
                   </div>
                 </div>
               </Card>
@@ -191,7 +234,7 @@ const Index = () => {
                           </span>
                           <Badge variant="secondary">{Math.round(result.relevance * 100)}%</Badge>
                         </div>
-                        <p className="text-sm text-slate-600">{result.snippet}</p>
+                        <p className="text-sm text-slate-600 select-text">{result.snippet}</p>
                       </Card>
                     ))}
                   </div>
